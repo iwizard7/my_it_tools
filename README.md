@@ -35,6 +35,8 @@ Network Diagnostics now includes route/DHCP details, DNS details and batch TCP p
 
 The separate **DNS Inspector** uses Debian Gateway for advanced DNS operations: record lookup, reverse DNS, resolver comparison and DNS health checks. Configure the gateway URL in the DNS Inspector panel.
 
+The Transform menu includes **Cyrillic & Latin analyzer**. It highlights Cyrillic characters in red and Latin characters in blue, supports texts up to 1 MB and processes everything locally in the browser.
+
 ## Development checks
 
 ```bash
