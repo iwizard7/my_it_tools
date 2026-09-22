@@ -2,7 +2,6 @@ services:
   gateway:
     build:
       context: .
-      platform: linux/arm/v7
     image: my-it-tools/debian-gateway:rpi
     ports:
       - "8080:8080"

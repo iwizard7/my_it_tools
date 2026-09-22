@@ -147,9 +147,9 @@ Configure the Gateway URL in the ESP32 UI under **Network → DNS Inspector**. E
 http://192.168.1.50:8080
 ```
 
-## Raspberry Pi 3B
+## Raspberry Pi 3B and newer
 
-The Pi can run the Gateway as the execution backend for the ESP32:
+The Gateway works on Raspberry Pi 3B, 3B+, 4 and 5 with Raspberry Pi OS/Debian. Native Python mode is the default, so Docker is not required:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/iwizard7/my_it_tools/main/deploy/raspberry-pi/install.sh -o install.sh
