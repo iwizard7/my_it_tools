@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.9.0 - 2026-09-22
+
+- Split the repository into independent `esp32/` and `debian-gateway/` projects.
+- Added a FastAPI Debian Gateway for Postman-like HTTP/HTTPS requests.
+- Added request headers, query parameters, JSON/raw body, redirects, timeouts and response limits.
+- Added persistent collection storage and Docker Compose deployment for the gateway.
+- Updated CI and firmware release paths for the new project layout.
+
 ## 1.8.0 - 2026-09-22
 
 - Added a mini Postman-style HTTP API console through the ESP32 network.

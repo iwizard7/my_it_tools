@@ -9,3 +9,6 @@ __pycache__/
 *.tmp
 .idea/
 .vscode/
+.venv/
+debian-gateway/data/
+debian-gateway/.pytest_cache/

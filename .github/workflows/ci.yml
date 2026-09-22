@@ -24,3 +24,6 @@ jobs:
           python-version: '3.12'
       - run: pip install platformio
       - run: pio run
+        working-directory: esp32
+      - run: pip install -r debian-gateway/requirements.txt pytest
+      - run: pytest debian-gateway/tests
