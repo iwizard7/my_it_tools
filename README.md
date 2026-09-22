@@ -24,6 +24,13 @@
 - DevOps Incident & Network Probe dashboard;
 - gateway, DNS, TCP и HTTP incident checks;
 - JSON incident reports с копированием и скачиванием;
+- SLA/error budget calculator;
+- secret scanner;
+- SemVer comparator;
+- Conventional Commit validator;
+- Docker image parser;
+- Kubernetes resource quantity converter;
+- deployment checklist;
 - Prometheus endpoint `/metrics`.
 
 ### Кодирование и текст
@@ -200,7 +207,7 @@ release/             # переносимые архивы исходников 
 
 ```text
 RAM:   12.7% — 41 468 байт из 327 680
-Flash: 45.7% — 897 682 байт из 1 966 080 OTA-слота
+Flash: 45.8% — 900 618 байт из 1 966 080 OTA-слота
 ```
 
 Большинство преобразований выполняется локально в браузере и не отправляет текст наружу. SHA-256, QR, network diagnostics, Wi‑Fi scan и аппаратная случайность выполняются на ESP32.

@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.6.0 - 2026-09-22
+
+- Reorganized the UI into Generate, Transform, Security and DevOps workflows.
+- Added SLA/error budget calculator, secret scanner, SemVer comparator, Conventional Commit validator, Docker image parser, Kubernetes quantity converter and deployment checklist.
+- Added an Incident Probe workflow with gateway, DNS, TCP and HTTP checks.
+
 ## 1.5.0 - 2026-09-22
 
 - Added DevOps Incident & Network Probe dashboard.
