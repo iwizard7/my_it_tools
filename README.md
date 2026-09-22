@@ -1,13 +1,76 @@
 # ESP32 IT Tools + Debian Gateway
 
-DevOps toolkit with two complementary projects. Version `1.9.0`:
+Portable DevOps toolkit with two complementary projects. Current installer/release line: **1.9.2**.
 
 ```text
-esp32/             # автономная прошивка ESP32-C3 и локальный web UI
-debian-gateway/    # полноценный HTTP/HTTPS gateway для Postman-like режима
+esp32/             # ESP32-C3 firmware and local web UI
+debian-gateway/    # HTTP/HTTPS, DNS and traceroute backend
+deploy/            # Raspberry Pi deployment helpers
+install.sh         # interactive cross-platform installer
 ```
 
-## ESP32
+## One-command installation
+
+The installer detects the host OS and architecture automatically:
+
+- macOS;
+- Debian/Ubuntu;
+- Raspberry Pi OS;
+- x86_64, ARM64 and ARMv7.
+
+Run it in a terminal:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/iwizard7/my_it_tools/main/install.sh | bash
+```
+
+Without flags, the installer asks:
+
+1. whether to install/build the ESP32 PlatformIO toolchain;
+2. whether to flash a connected ESP32;
+3. whether to use Docker instead of native Python Gateway.
+
+The default Gateway mode is a native Python virtualenv. Docker is optional.
+
+### Installer modes
+
+Install and flash ESP32:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/iwizard7/my_it_tools/main/install.sh | bash -s -- --esp32
+```
+
+Install only the Gateway:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/iwizard7/my_it_tools/main/install.sh | bash -s -- --gateway-only
+```
+
+Use Docker instead of native Python:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/iwizard7/my_it_tools/main/install.sh | bash -s -- --docker
+```
+
+Run unattended on a server or CI host:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/iwizard7/my_it_tools/main/install.sh | bash -s -- --non-interactive
+```
+
+Non-interactive defaults are native Gateway, no ESP32 flash and no Docker installation.
+
+## ESP32-C3
+
+The ESP32 creates a local Wi‑Fi network:
+
+```text
+SSID:      ESP32-Random-Tools
+Password:  randomtools
+URL:       http://192.168.4.1
+```
+
+Manual build and upload:
 
 ```bash
 cd esp32
@@ -15,11 +78,47 @@ pio run
 pio run -t upload --upload-port /dev/ttyACM0
 ```
 
-Connect to `ESP32-Random-Tools` with password `randomtools` and open `http://192.168.4.1`.
+On macOS the port is usually `/dev/cu.usbmodem1101`.
 
-ESP32 provides offline developer tools, network diagnostics, Incident Probe, metrics, QR generator and a lightweight API console.
+The firmware provides:
+
+- random data, UUID, token/password and QR generators;
+- Base64, URL, JSON and text tools;
+- Cyrillic/Latin script analyzer with colored highlighting;
+- DevOps Toolkit for curl, Git, Docker, Kubernetes, Linux and CI/CD helpers;
+- Network Diagnostics;
+- DNS Inspector UI connected to Debian Gateway;
+- Incident Probe;
+- Log Analyzer with local files up to 2 MB;
+- API Console;
+- metrics, Prometheus endpoint and OTA updates.
 
 ## Debian Gateway
+
+The Gateway provides the heavier backend functionality:
+
+- HTTP/HTTPS requests;
+- headers, query parameters and JSON/raw bodies;
+- redirects and timeouts;
+- response size limit;
+- persistent collections;
+- DNS record lookup;
+- reverse DNS;
+- resolver comparison;
+- DNS health checks;
+- bounded traceroute through the host OS.
+
+### Native Python mode
+
+```bash
+cd debian-gateway
+python3 -m venv .venv
+. .venv/bin/activate
+pip install -r requirements.txt
+uvicorn app.main:app --host 0.0.0.0 --port 8080
+```
+
+### Docker mode
 
 ```bash
 cd debian-gateway
@@ -27,17 +126,30 @@ docker compose up -d --build
 curl http://127.0.0.1:8080/healthz
 ```
 
-The gateway adds HTTP/HTTPS requests, headers, query parameters, JSON/raw body, redirects, timeouts, response limits and persistent collections. See [`debian-gateway/README.md`](debian-gateway/README.md).
+### Useful endpoints
 
-The ESP32 **Log Analyzer** can load local `.log`, `.txt`, `.json`, `.ndjson` and `.out` files up to 2 MB. Files are processed only in the browser and are not sent to the controller or gateway.
+```text
+GET  /healthz
+GET  /version
+POST /api/request
+GET  /api/collections
+POST /api/collections
+GET  /api/dns/lookup
+GET  /api/dns/reverse
+GET  /api/dns/compare
+GET  /api/dns/health
+GET  /api/traceroute
+```
 
-Network Diagnostics now includes route/DHCP details, DNS details and batch TCP port checks. Real hop-by-hop traceroute is exposed by Debian Gateway at `/api/traceroute`, because raw ICMP tracing belongs on the Debian host rather than inside the ESP32 firmware.
+Configure the Gateway URL in the ESP32 UI under **Network → DNS Inspector**. Example:
 
-The separate **DNS Inspector** uses Debian Gateway for advanced DNS operations: record lookup, reverse DNS, resolver comparison and DNS health checks. Configure the gateway URL in the DNS Inspector panel.
+```text
+http://192.168.1.50:8080
+```
 
-## Raspberry Pi 3B deployment
+## Raspberry Pi 3B
 
-The Debian Gateway can run on Raspberry Pi 3B with Raspberry Pi OS/Debian:
+The Pi can run the Gateway as the execution backend for the ESP32:
 
 ```bash
 curl -fsSL https://raw.githubusercontent.com/iwizard7/my_it_tools/main/deploy/raspberry-pi/install.sh -o install.sh
@@ -45,32 +157,31 @@ chmod +x install.sh
 ./install.sh
 ```
 
-Для всех поддерживаемых host-платформ также доступен единый установщик из корня репозитория:
+The Raspberry Pi installer delegates to the universal installer and uses native Python by default. Docker is available with:
 
 ```bash
-curl -fsSL https://raw.githubusercontent.com/iwizard7/my_it_tools/main/install.sh | bash
+./install.sh --docker
 ```
 
-Он определяет macOS, Debian/Ubuntu или Raspberry Pi, устанавливает нужные зависимости и запускает Gateway в обычном Python virtualenv — Docker не обязателен. Для прошивки подключённого ESP32 используйте `--esp32`.
-
-Если запустить установщик без ключей в обычном терминале, он сам задаст вопросы: устанавливать ли ESP32 toolchain, прошивать ли найденный USB-контроллер и использовать ли Docker. На сервере без TTY применяются безопасные значения по умолчанию: native Gateway, без прошивки ESP32.
-
-Если нужен Docker-вариант:
-
-```bash
-curl -fsSL https://raw.githubusercontent.com/iwizard7/my_it_tools/main/install.sh | bash -s -- --docker
-```
-
-See [`deploy/raspberry-pi/README.md`](deploy/raspberry-pi/README.md) for manual installation, service management and ESP32 Gateway URL configuration.
-
-The Transform menu includes **Cyrillic & Latin analyzer**. It highlights Cyrillic characters in red and Latin characters in blue, supports texts up to 1 MB and processes everything locally in the browser.
+See [`deploy/raspberry-pi/README.md`](deploy/raspberry-pi/README.md) for service operations and ARM details.
 
 ## Development checks
 
 ```bash
 node tests/test_tools.js
 pio run -d esp32
+python3 -m py_compile debian-gateway/app/main.py
 python3 -m pytest debian-gateway/tests
 ```
 
-The full documentation and changelog remain in the repository root. This project is not affiliated with the original IT-Tools project.
+GitHub Actions runs the JavaScript tests, Gateway tests and PlatformIO build. Tags matching `v*` publish a firmware release.
+
+## Project files
+
+- `CHANGELOG.md` — release history;
+- `openapi.yaml` — API reference;
+- `LICENSE` — MIT license;
+- `release/` — source and firmware archives;
+- `.github/` — CI, release and issue templates.
+
+This is an independent project inspired by the idea of a local IT tools collection and is not affiliated with the original IT‑Tools project.
