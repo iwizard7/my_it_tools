@@ -1,0 +1,55 @@
+openapi: 3.0.3
+info:
+  title: ESP32 IT Tools API
+  version: 1.4.0
+  description: Local developer tools and device diagnostics served by ESP32-C3.
+servers:
+  - url: http://192.168.4.1
+paths:
+  /api/system:
+    get:
+      summary: Device information
+      responses:
+        '200': {description: Device information}
+  /api/metrics:
+    get:
+      summary: Live device metrics
+      responses:
+        '200': {description: Temperature, heap, uptime and storage metrics}
+  /api/generate:
+    get:
+      summary: Generate random strings
+      parameters:
+        - {name: length, in: query, schema: {type: integer, minimum: 1, maximum: 256}}
+        - {name: count, in: query, schema: {type: integer, minimum: 1, maximum: 20}}
+      responses:
+        '200': {description: Generated strings}
+  /api/hash:
+    post:
+      summary: SHA-256 hash of raw text
+      requestBody:
+        required: true
+        content: {text/plain: {schema: {type: string}}}
+      responses:
+        '200': {description: Hexadecimal SHA-256 digest}
+  /api/net:
+    get:
+      summary: Network diagnostic
+      parameters:
+        - {name: op, in: query, required: true, schema: {type: string, enum: [dns, ping, http, tcp, dhcp, mdns]}}
+        - {name: host, in: query, schema: {type: string}}
+        - {name: port, in: query, schema: {type: integer}}
+      responses:
+        '200': {description: Diagnostic result}
+  /api/wifi/scan:
+    get:
+      summary: Scan nearby Wi-Fi networks
+      responses:
+        '200': {description: Network list}
+  /api/qr:
+    get:
+      summary: Generate QR SVG
+      parameters:
+        - {name: text, in: query, required: true, schema: {type: string, maxLength: 2000}}
+      responses:
+        '200': {description: SVG QR code, content: {image/svg+xml: {schema: {type: string}}}}

@@ -19,7 +19,7 @@
 - Lorem Ipsum;
 - fake test data;
 - SVG placeholder;
-- cron templates.
+- cron templates;
 - QR code generator (SVG, до 2000 символов).
 
 ### Кодирование и текст
@@ -41,10 +41,18 @@
 
 - SHA-256 hash на самом ESP32;
 - HMAC helper;
+- password strength analyzer;
+- HS256 JWT signature verification;
+- SHA-256 hash файлов в браузере;
 - JWT decoder;
 - URL parser;
 - IPv4 subnet calculator;
 - Wi‑Fi scanner;
+- DNS lookup;
+- HTTP status checker;
+- TCP port checker;
+- DHCP information;
+- mDNS service browser;
 - системная информация устройства;
 - аппаратная генерация случайных данных.
 
@@ -58,7 +66,8 @@
 - OTA-обновление через веб-интерфейс;
 - два OTA-слота приложения;
 - базовые HTTP security headers;
-- uptime, свободная RAM, flash, CPU и IP-адреса в dashboard.
+- uptime, свободная RAM, flash, CPU и IP-адреса в dashboard;
+- график температуры чипа, heap, uptime, generation rate, LittleFS и Wi‑Fi uptime.
 
 ## Быстрый старт
 
@@ -142,6 +151,13 @@ GET  /api/generate?length=32&count=5&upper=true&lower=true&digits=true&symbols=t
 GET  /api/system
 GET  /api/wifi/scan
 GET  /api/qr?text=...
+GET  /api/metrics
+GET  /api/net?op=dns&host=example.com
+GET  /api/net?op=ping&host=example.com
+GET  /api/net?op=http&host=example.com
+GET  /api/net?op=tcp&host=example.com&port=443
+GET  /api/net?op=dhcp
+GET  /api/net?op=mdns&host=http
 POST /api/hash              # raw text body, SHA-256 response
 POST /api/wifi              # ssid и password в form-urlencoded
 POST /api/update             # firmware.bin
@@ -162,6 +178,11 @@ platformio.ini       # PlatformIO и настройки платы
 partitions.csv       # два OTA-слота для 4 MB flash
 src/main.cpp         # прошивка, REST API и встроенный веб-интерфейс
 README.md            # документация
+CHANGELOG.md         # история изменений
+openapi.yaml         # описание REST API
+tests/               # тесты JavaScript-инструментов
+Dockerfile           # воспроизводимая сборка на Debian
+.github/             # CI, releases и issue templates
 release/             # переносимые архивы исходников и firmware
 ```
 
@@ -172,13 +193,38 @@ release/             # переносимые архивы исходников 
 Текущая сборка использует примерно:
 
 ```text
-RAM:   12.6% — 41 396 байт из 327 680
-Flash: 41.9% — 823 552 байт из 1 966 080 OTA-слота
+RAM:   12.7% — 41 468 байт из 327 680
+Flash: 45.4% — 891 970 байт из 1 966 080 OTA-слота
 ```
 
-Большинство преобразований выполняется локально в браузере и не отправляет текст наружу. SHA-256, Wi‑Fi scan и аппаратная случайность выполняются на ESP32.
+Большинство преобразований выполняется локально в браузере и не отправляет текст наружу. SHA-256, QR, network diagnostics, Wi‑Fi scan и аппаратная случайность выполняются на ESP32.
 
-Полный BIP39 dictionary, RSA key generator, bcrypt, полноценные XML/YAML parser и QR encoder не включены в базовую сборку: они требуют дополнительных словарей, библиотек или заметного объёма flash/RAM. Их можно вынести в опциональные модули или на Debian-сервер.
+Полный BIP39 dictionary, RSA key generator, bcrypt и полноценные XML/YAML parser не включены в базовую сборку: они требуют дополнительных словарей, библиотек или заметного объёма flash/RAM. Их можно вынести в опциональные модули или на Debian-сервер.
+
+## Проверки и релизы
+
+Локальные тесты:
+
+```bash
+node tests/test_tools.js
+pio run
+```
+
+GitHub Actions автоматически запускает JavaScript-тесты и PlatformIO build. Push тега вида `v1.3.0` создаёт GitHub Release с готовым firmware-архивом:
+
+```bash
+git tag v1.3.0
+git push origin v1.3.0
+```
+
+Docker-сборка для Debian:
+
+```bash
+docker build -t esp32-it-tools-builder .
+docker run --rm esp32-it-tools-builder
+```
+
+API описан в `openapi.yaml`. Лицензия проекта — MIT.
 
 ## Переносимые архивы
 
