@@ -28,4 +28,16 @@ curl -X POST http://127.0.0.1:8080/api/request \
 
 Поддерживаются HTTP methods, headers, query parameters, JSON/raw body, redirects, timeout и ограничение response до 2 MB.
 
+Расширенный traceroute выполняется Debian Gateway, а не ESP32:
+
+```bash
+curl 'http://127.0.0.1:8080/api/traceroute?host=example.com&max_hops=16'
+```
+
+Установите утилиту на Debian:
+
+```bash
+sudo apt-get install traceroute
+```
+
 Коллекции сохраняются в volume в `data/collections.json`.

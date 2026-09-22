@@ -31,6 +31,8 @@ The gateway adds HTTP/HTTPS requests, headers, query parameters, JSON/raw body, 
 
 The ESP32 **Log Analyzer** can load local `.log`, `.txt`, `.json`, `.ndjson` and `.out` files up to 2 MB. Files are processed only in the browser and are not sent to the controller or gateway.
 
+Network Diagnostics now includes route/DHCP details, DNS details and batch TCP port checks. Real hop-by-hop traceroute is exposed by Debian Gateway at `/api/traceroute`, because raw ICMP tracing belongs on the Debian host rather than inside the ESP32 firmware.
+
 ## Development checks
 
 ```bash

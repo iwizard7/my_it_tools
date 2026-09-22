@@ -1,7 +1,9 @@
 from __future__ import annotations
 
+import asyncio
 import json
 import os
+import shutil
 import time
 import uuid
 from pathlib import Path
@@ -55,6 +57,29 @@ async def healthz() -> dict[str, str]:
 @app.get("/version")
 async def version() -> dict[str, str]:
     return {"name": "debian-gateway", "version": app.version}
+
+
+@app.get("/api/traceroute")
+async def traceroute(host: str, max_hops: int = 16) -> dict[str, Any]:
+    """Run the host OS traceroute utility with bounded arguments.
+
+    The ESP32 intentionally does not execute raw ICMP traceroute itself; Debian
+    is the correct place for this privileged/network-dependent operation.
+    """
+    if not shutil.which("traceroute"):
+        raise HTTPException(status_code=503, detail="traceroute is not installed on the gateway")
+    if not host or len(host) > 253 or any(c in host for c in "\r\n;&|`$"):
+        raise HTTPException(status_code=400, detail="invalid host")
+    hops = max(1, min(max_hops, 30))
+    try:
+        process = await asyncio.create_subprocess_exec(
+            "traceroute", "-n", "-m", str(hops), "-w", "1", "-q", "1", host,
+            stdout=asyncio.subprocess.PIPE, stderr=asyncio.subprocess.STDOUT,
+        )
+        stdout, _ = await asyncio.wait_for(process.communicate(), timeout=45)
+    except (asyncio.TimeoutError, OSError) as exc:
+        raise HTTPException(status_code=504, detail=str(exc)) from exc
+    return {"host": host, "exitCode": process.returncode, "output": stdout.decode(errors="replace")}
 
 
 @app.post("/api/request")

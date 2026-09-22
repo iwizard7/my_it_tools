@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: ESP32 IT Tools API
-  version: 1.8.0
+  version: 1.8.2
   description: Local developer tools and device diagnostics served by ESP32-C3.
 servers:
   - url: http://192.168.4.1
