@@ -1,5 +1,13 @@
 # Changelog
 
+## 1.5.0 - 2026-09-22
+
+- Added DevOps Incident & Network Probe dashboard.
+- Added combined gateway, DNS, TCP and HTTP incident checks.
+- Added JSON incident reports with copy and download actions.
+- Added Prometheus-compatible `/metrics` endpoint.
+- Added live system metrics for dashboards and monitoring.
+
 ## 1.4.0 - 2026-09-22
 
 - Added password strength analyzer and HS256 JWT verification.

@@ -12,7 +12,7 @@ namespace {
 constexpr char kApName[] = "ESP32-Random-Tools";
 constexpr char kApPassword[] = "randomtools";
 constexpr char kHostname[] = "esp32-it-tools";
-constexpr char kVersion[] = "1.4.0";
+constexpr char kVersion[] = "1.5.0";
 constexpr size_t kMaxLength = 256;
 constexpr size_t kMaxResults = 20;
 
@@ -82,6 +82,7 @@ const char kPage[] PROGMEM = R"HTML(
       <button data-tool="stats">📊 Text statistics</button>
       <button data-tool="toolbox">🧰 More IT tools</button>
       <button data-tool="qr">▦ QR generator</button>
+      <button data-tool="incident">🚨 Incident probe</button>
       <button data-tool="system">⚙️ Device & OTA</button>
     </nav>
     <section class="card">
@@ -99,10 +100,11 @@ const char kPage[] PROGMEM = R"HTML(
       <div id="stats" class="tool"><h2>Text statistics</h2><p class="hint">Count characters, words, lines and bytes.</p><textarea id="statsInput" placeholder="Paste text here..."></textarea><br><br><button id="statsRun">Analyze</button><div id="statsOutput" class="output"></div></div>
       <div id="toolbox" class="tool"><h2>More IT tools</h2><p class="hint">Offline converters, generators, network helpers and security utilities.</p><select id="toolSelect"><option value="sha256">SHA-256 hash</option><option value="hmac">HMAC note</option><option value="strength">Password strength</option><option value="jwtverify">JWT signature verification</option><option value="html">HTML entities</option><option value="unicode">Text ↔ Unicode</option><option value="binary">Text ↔ binary</option><option value="hex">Text ↔ hexadecimal</option><option value="case">Case converter</option><option value="slug">Slugify string</option><option value="jwt">JWT decoder</option><option value="urlparse">URL parser</option><option value="jsoncsv">JSON array ↔ CSV</option><option value="ipv4">IPv4 subnet calculator</option><option value="mac">MAC address generator</option><option value="port">Random port generator</option><option value="ipv6">IPv6 ULA generator</option><option value="ulid">ULID generator</option><option value="nanoid">NanoID generator</option><option value="lorem">Lorem Ipsum</option><option value="fake">Fake test data</option><option value="svg">SVG placeholder</option><option value="cron">Cron template</option><option value="diff">Simple text diff</option><option value="wifiscan">Wi‑Fi scanner</option><option value="net">Network diagnostic</option><option value="filehash">File SHA-256</option></select><br><br><textarea id="toolInput" placeholder="Input..."></textarea><br><input id="toolFile" type="file" style="margin-top:10px"><br><br><button id="toolRun">Run tool</button><button id="toolClear" class="secondary">Clear</button><div id="toolOutput" class="output"></div></div>
       <div id="qr" class="tool"><h2>QR code generator</h2><p class="hint">Generate a QR code on the ESP32. Maximum payload: 600 characters. Works offline.</p><textarea id="qrInput" placeholder="Text, URL or Wi‑Fi payload..."></textarea><br><br><button id="qrGenerate">Generate QR</button><button id="qrDownload" class="secondary">Download SVG</button><div id="qrStatus" class="status"></div><div id="qrOutput" style="background:white;border-radius:12px;padding:18px;margin-top:16px;text-align:center;min-height:120px"></div></div>
+      <div id="incident" class="tool"><h2>DevOps Incident & Network Probe</h2><p class="hint">Run a compact incident report against a service from the ESP32 network.</p><div class="controls"><div><label for="incidentHost">Target hostname or IP</label><input id="incidentHost" value="example.com" placeholder="api.example.com"></div><div><label for="incidentPort">TCP port</label><input id="incidentPort" type="number" min="1" max="65535" value="80"></div><div><label for="incidentPath">HTTP path</label><input id="incidentPath" value="/" placeholder="/health"></div></div><br><button id="runIncident">Run incident checks</button><button id="copyIncident" class="secondary">Copy JSON</button><button id="downloadIncident" class="secondary">Download report</button><div id="incidentStatus" class="status">Ready</div><pre id="incidentOutput" class="output"></pre></div>
       <div id="system" class="tool"><h2>Device & OTA</h2><p class="hint">Live ESP32 status, Wi‑Fi configuration, metrics and wireless firmware updates.</p><button id="refreshSystem">Refresh status</button><div id="systemOutput" class="output">Loading...</div><canvas id="metricsChart" width="700" height="220" style="width:100%;margin-top:16px;background:#111827;border-radius:10px"></canvas><hr><h3>Connect to home Wi‑Fi</h3><p class="hint">The ESP32 access point remains available while connecting.</p><input id="wifiSsid" placeholder="Wi‑Fi network name"><br><br><input id="wifiPassword" type="password" placeholder="Wi‑Fi password"><br><br><button id="saveWifi">Save and restart</button><hr><h3>OTA firmware update</h3><input id="firmware" type="file" accept=".bin"><br><br><button id="uploadFirmware">Upload firmware</button><div id="otaStatus" class="status"></div></div>
     </section>
   </div>
-  <footer>ESP32-C3 · local-only tools · Wi-Fi AP: ESP32-Random-Tools · v1.4.0</footer>
+  <footer>ESP32-C3 · local-only tools · Wi-Fi AP: ESP32-Random-Tools · v1.5.0</footer>
 </main>
 <script>
 const $ = id => document.getElementById(id);
@@ -169,6 +171,10 @@ $('toolRun').onclick=toolboxRun; $('toolClear').onclick=()=>{$('toolInput').valu
 let qrSvg='';
 $('qrGenerate').onclick=async()=>{const text=$('qrInput').value;if(!text){$('qrStatus').textContent='Enter text first';return;}if(text.length>600){$('qrStatus').textContent='Payload is too long (maximum 600 characters)';return;}$('qrStatus').textContent='Generating on ESP32...';try{const r=await fetch('/api/qr?text='+encodeURIComponent(text));if(!r.ok)throw Error(await r.text());qrSvg=await r.text();$('qrOutput').innerHTML=qrSvg;$('qrStatus').textContent='QR generated on the ESP32';}catch(e){$('qrStatus').textContent='QR error: '+e.message;}};
 $('qrDownload').onclick=()=>{if(!qrSvg){$('qrStatus').textContent='Generate a QR code first';return;}const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([qrSvg],{type:'image/svg+xml'}));a.download='esp32-qr.svg';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);};
+let incidentReport=null;
+$('runIncident').onclick=async()=>{const host=$('incidentHost').value.trim(),port=$('incidentPort').value,path=$('incidentPath').value||'/';if(!host){$('incidentStatus').textContent='Enter a target host';return;}$('incidentStatus').textContent='Running DNS, gateway, TCP and HTTP checks...';try{const r=await fetch('/api/incident?host='+encodeURIComponent(host)+'&port='+port+'&path='+encodeURIComponent(path));incidentReport=await r.json();$('incidentOutput').textContent=JSON.stringify(incidentReport,null,2);$('incidentStatus').textContent=(incidentReport.ok?'PASS':'FAIL')+' · '+incidentReport.durationMs+' ms';}catch(e){$('incidentStatus').textContent='Probe error: '+e.message;}};
+$('copyIncident').onclick=()=>{if(incidentReport)navigator.clipboard.writeText(JSON.stringify(incidentReport,null,2));};
+$('downloadIncident').onclick=()=>{if(!incidentReport)return;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(incidentReport,null,2)],{type:'application/json'}));a.download='incident-report.json';a.click();};
 async function refreshSystem() { try { const x=await (await fetch('/api/system')).json(); $('systemOutput').textContent=`Chip: ${x.chip}\nSDK: ${x.sdk}\nCPU: ${x.cpu} MHz\nFree heap: ${x.heap} bytes\nFlash: ${x.flash} bytes\nUptime: ${x.uptime}s\nAP IP: ${x.apIp}\nStation: ${x.staIp||'not connected'}\nHostname: ${x.hostname}`; } catch(e) { $('systemOutput').textContent='Unable to read device status'; } }
 $('refreshSystem').onclick=refreshSystem;
 const metricHistory=[];function drawMetrics(){const c=$('metricsChart'),ctx=c.getContext('2d'),w=c.width,h=c.height;ctx.clearRect(0,0,w,h);ctx.strokeStyle='#374151';for(let y=20;y<h;y+=40){ctx.beginPath();ctx.moveTo(0,y);ctx.lineTo(w,y);ctx.stroke();}if(metricHistory.length<2)return;const max=Math.max(...metricHistory.map(x=>x.heap),1),step=w/(metricHistory.length-1);ctx.strokeStyle='#8b5cf6';ctx.beginPath();metricHistory.forEach((x,i)=>{const y=h-10-(x.heap/max)*(h-25);i?ctx.lineTo(i*step,y):ctx.moveTo(i*step,y);});ctx.stroke();ctx.strokeStyle='#22d3ee';ctx.beginPath();metricHistory.forEach((x,i)=>{const y=h-10-(x.temp/100)*(h-25);i?ctx.lineTo(i*step,y):ctx.moveTo(i*step,y);});ctx.stroke();}
@@ -242,6 +248,54 @@ void handleMetrics() {
                 ",\"generationRate\":" + String(generationRate, 2) +
                 ",\"littlefsFree\":" + String(total > used ? total - used : 0) +
                 ",\"wifiUptime\":" + String(wifiConnectedAt ? (millis() - wifiConnectedAt) / 1000 : 0) + "}";
+  server.send(200, "application/json", json);
+}
+
+void handlePrometheus() {
+  String body = "# HELP esp32_free_heap_bytes Free heap\n# TYPE esp32_free_heap_bytes gauge\nesp32_free_heap_bytes " + String(ESP.getFreeHeap()) +
+                "\n# HELP esp32_uptime_seconds Uptime\n# TYPE esp32_uptime_seconds counter\nesp32_uptime_seconds " + String(millis() / 1000) +
+                "\n# HELP esp32_chip_temperature_celsius Chip temperature\n# TYPE esp32_chip_temperature_celsius gauge\nesp32_chip_temperature_celsius " + String(temperatureRead(), 1) +
+                "\n# HELP esp32_generation_rate_per_second Random generation rate\n# TYPE esp32_generation_rate_per_second gauge\nesp32_generation_rate_per_second " + String(generationRate, 2) + "\n";
+  server.send(200, "text/plain; version=0.0.4", body);
+}
+
+void handleIncident() {
+  const String host = server.arg("host");
+  const uint16_t port = static_cast<uint16_t>(constrain(server.arg("port").toInt(), 1, 65535));
+  const String path = server.arg("path").isEmpty() ? "/" : server.arg("path");
+  const unsigned long started = millis();
+  IPAddress ip;
+  const bool dnsOk = !host.isEmpty() && WiFi.hostByName(host.c_str(), ip);
+  unsigned long dnsMs = millis() - started;
+  bool tcpOk = false;
+  unsigned long tcpMs = 0;
+  int httpStatus = 0;
+  unsigned long httpMs = 0;
+  if (dnsOk) {
+    WiFiClient tcp;
+    const unsigned long tcpStart = millis();
+    tcpOk = tcp.connect(ip, port, 3000);
+    tcpMs = millis() - tcpStart;
+    tcp.stop();
+    WiFiClient http;
+    const unsigned long httpStart = millis();
+    if (http.connect(ip, 80, 3000)) {
+      http.printf("GET %s HTTP/1.0\r\nHost: %s\r\nConnection: close\r\n\r\n", path.c_str(), host.c_str());
+      const String line = http.readStringUntil('\n');
+      const int space = line.indexOf(' ');
+      if (space >= 0) httpStatus = line.substring(space + 1).toInt();
+    }
+    http.stop();
+    httpMs = millis() - httpStart;
+  }
+  const bool gatewayOk = WiFi.status() == WL_CONNECTED && WiFi.gatewayIP() != IPAddress(0, 0, 0, 0);
+  const bool ok = dnsOk && tcpOk && httpStatus >= 200 && httpStatus < 500;
+  String json = "{\"version\":\"" + String(kVersion) + "\",\"target\":\"" + host + "\",\"ip\":\"" + ip.toString() +
+                "\",\"ok\":" + String(ok ? "true" : "false") + ",\"durationMs\":" + String(millis() - started) +
+                ",\"checks\":{\"gateway\":{\"ok\":" + String(gatewayOk ? "true" : "false") +
+                "},\"dns\":{\"ok\":" + String(dnsOk ? "true" : "false") + ",\"latencyMs\":" + String(dnsMs) +
+                "},\"tcp\":{\"ok\":" + String(tcpOk ? "true" : "false") + ",\"port\":" + String(port) + ",\"latencyMs\":" + String(tcpMs) +
+                "},\"http\":{\"ok\":" + String(httpStatus >= 200 && httpStatus < 500 ? "true" : "false") + ",\"status\":" + String(httpStatus) + ",\"latencyMs\":" + String(httpMs) + "}}}";
   server.send(200, "application/json", json);
 }
 
@@ -439,6 +493,8 @@ void setup() {
   server.on("/api/generate", HTTP_GET, handleGenerate);
   server.on("/api/system", HTTP_GET, handleSystem);
   server.on("/api/metrics", HTTP_GET, handleMetrics);
+  server.on("/metrics", HTTP_GET, handlePrometheus);
+  server.on("/api/incident", HTTP_GET, handleIncident);
   server.on("/api/net", HTTP_GET, handleNet);
   server.on("/api/hash", HTTP_POST, handleHash);
   server.on("/api/wifi/scan", HTTP_GET, handleWifiScan);

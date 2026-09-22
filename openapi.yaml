@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: ESP32 IT Tools API
-  version: 1.4.0
+  version: 1.5.0
   description: Local developer tools and device diagnostics served by ESP32-C3.
 servers:
   - url: http://192.168.4.1
@@ -53,3 +53,17 @@ paths:
         - {name: text, in: query, required: true, schema: {type: string, maxLength: 2000}}
       responses:
         '200': {description: SVG QR code, content: {image/svg+xml: {schema: {type: string}}}}
+  /api/incident:
+    get:
+      summary: Run a DevOps incident probe
+      parameters:
+        - {name: host, in: query, required: true, schema: {type: string}}
+        - {name: port, in: query, schema: {type: integer, default: 80}}
+        - {name: path, in: query, schema: {type: string, default: /}}
+      responses:
+        '200': {description: Gateway, DNS, TCP and HTTP checks}
+  /metrics:
+    get:
+      summary: Prometheus metrics
+      responses:
+        '200': {description: Prometheus text exposition format}

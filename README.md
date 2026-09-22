@@ -21,6 +21,10 @@
 - SVG placeholder;
 - cron templates;
 - QR code generator (SVG, до 2000 символов).
+- DevOps Incident & Network Probe dashboard;
+- gateway, DNS, TCP и HTTP incident checks;
+- JSON incident reports с копированием и скачиванием;
+- Prometheus endpoint `/metrics`.
 
 ### Кодирование и текст
 
@@ -152,6 +156,8 @@ GET  /api/system
 GET  /api/wifi/scan
 GET  /api/qr?text=...
 GET  /api/metrics
+GET  /api/incident?host=example.com&port=80&path=/health
+GET  /metrics
 GET  /api/net?op=dns&host=example.com
 GET  /api/net?op=ping&host=example.com
 GET  /api/net?op=http&host=example.com
@@ -194,7 +200,7 @@ release/             # переносимые архивы исходников 
 
 ```text
 RAM:   12.7% — 41 468 байт из 327 680
-Flash: 45.4% — 891 970 байт из 1 966 080 OTA-слота
+Flash: 45.7% — 897 682 байт из 1 966 080 OTA-слота
 ```
 
 Большинство преобразований выполняется локально в браузере и не отправляет текст наружу. SHA-256, QR, network diagnostics, Wi‑Fi scan и аппаратная случайность выполняются на ESP32.
