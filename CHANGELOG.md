@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.8.1 - 2026-09-23
+
+- Added local log file upload to Log Analyzer.
+- Added support for `.log`, `.txt`, `.json`, `.ndjson` and `.out` files up to 2 MB.
+- Files are read in the browser and never uploaded to ESP32 or Debian Gateway.
+
 ## 1.9.0 - 2026-09-22
 
 - Split the repository into independent `esp32/` and `debian-gateway/` projects.

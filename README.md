@@ -29,6 +29,8 @@ curl http://127.0.0.1:8080/healthz
 
 The gateway adds HTTP/HTTPS requests, headers, query parameters, JSON/raw body, redirects, timeouts, response limits and persistent collections. See [`debian-gateway/README.md`](debian-gateway/README.md).
 
+The ESP32 **Log Analyzer** can load local `.log`, `.txt`, `.json`, `.ndjson` and `.out` files up to 2 MB. Files are processed only in the browser and are not sent to the controller or gateway.
+
 ## Development checks
 
 ```bash
