@@ -53,6 +53,8 @@ curl -fsSL https://raw.githubusercontent.com/iwizard7/my_it_tools/main/install.s
 
 Он определяет macOS, Debian/Ubuntu или Raspberry Pi, устанавливает нужные зависимости и запускает Gateway в обычном Python virtualenv — Docker не обязателен. Для прошивки подключённого ESP32 используйте `--esp32`.
 
+Если запустить установщик без ключей в обычном терминале, он сам задаст вопросы: устанавливать ли ESP32 toolchain, прошивать ли найденный USB-контроллер и использовать ли Docker. На сервере без TTY применяются безопасные значения по умолчанию: native Gateway, без прошивки ESP32.
+
 Если нужен Docker-вариант:
 
 ```bash

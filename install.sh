@@ -7,6 +7,7 @@ set -euo pipefail
 #   ./install.sh --esp32                 # also build and flash ESP32 if a port is found
 #   ./install.sh --gateway-only          # only deploy Debian Gateway
 #   ./install.sh --docker                # use optional Docker deployment
+#   ./install.sh --non-interactive       # defaults: native Gateway, no ESP32 flash
 #   ./install.sh --project-dir /opt/my_it_tools
 
 REPO_URL="${REPO_URL:-https://github.com/iwizard7/my_it_tools.git}"
@@ -14,6 +15,8 @@ PROJECT_DIR="${PROJECT_DIR:-$PWD/my_it_tools}"
 FLASH_ESP32=0
 GATEWAY_ONLY=0
 USE_DOCKER=0
+SETUP_ESP32=0
+NON_INTERACTIVE=0
 
 log() { printf '\n[%s] %s\n' "$(date '+%H:%M:%S')" "$*"; }
 die() { echo "ERROR: $*" >&2; exit 1; }
@@ -21,9 +24,10 @@ has() { command -v "$1" >/dev/null 2>&1; }
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
-    --esp32) FLASH_ESP32=1; shift ;;
+    --esp32) SETUP_ESP32=1; FLASH_ESP32=1; shift ;;
     --gateway-only) GATEWAY_ONLY=1; shift ;;
     --docker) USE_DOCKER=1; shift ;;
+    --non-interactive) NON_INTERACTIVE=1; shift ;;
     --project-dir) PROJECT_DIR="${2:?missing project directory}"; shift 2 ;;
     --repo) REPO_URL="${2:?missing repository URL}"; shift 2 ;;
     -h|--help)
@@ -53,6 +57,31 @@ fi
 
 log "Detected platform: ${TARGET} (${OS}/${ARCH})"
 
+ask_yes_no() {
+  local prompt="$1" default="$2" answer=""
+  if [[ "$NON_INTERACTIVE" -eq 1 || ! -r /dev/tty ]]; then
+    [[ "$default" == "y" ]]
+    return
+  fi
+  if [[ "$default" == "y" ]]; then
+    read -r -p "$prompt [Y/n] " answer < /dev/tty
+    [[ -z "$answer" || "$answer" =~ ^[Yy]$ ]]
+  else
+    read -r -p "$prompt [y/N] " answer < /dev/tty
+    [[ "$answer" =~ ^[Yy]$ ]]
+  fi
+}
+
+if [[ "$GATEWAY_ONLY" -eq 0 && "$SETUP_ESP32" -eq 0 ]]; then
+  if ask_yes_no "Install/build ESP32 PlatformIO toolchain?" "n"; then SETUP_ESP32=1; fi
+fi
+if [[ "$SETUP_ESP32" -eq 1 && "$FLASH_ESP32" -eq 0 ]]; then
+  if ask_yes_no "Flash ESP32 now if a USB port is found?" "n"; then FLASH_ESP32=1; fi
+fi
+if [[ "$USE_DOCKER" -eq 0 && "$NON_INTERACTIVE" -eq 0 ]]; then
+  if ask_yes_no "Use Docker for Debian Gateway instead of native Python?" "n"; then USE_DOCKER=1; fi
+fi
+
 clone_project() {
   if [[ -f "$PROJECT_DIR/README.md" && -d "$PROJECT_DIR/esp32" ]]; then
     log "Using existing project: $PROJECT_DIR"
@@ -66,19 +95,19 @@ clone_project() {
 
 install_macos_tools() {
   has brew || die "Homebrew is required on macOS: https://brew.sh"
-  brew install python@3.12 git 2>/dev/null || true
-  local venv="$HOME/.local/share/my-it-tools/venv"
-  python3 -m venv "$venv"
-  "$venv/bin/pip" install -q --upgrade pip platformio
-  echo "PlatformIO installed at $venv/bin/pio"
-  if [[ "$GATEWAY_ONLY" -eq 0 ]]; then
+  if [[ "$SETUP_ESP32" -eq 1 ]]; then
+    brew install python@3.12 git 2>/dev/null || true
+    local venv="$HOME/.local/share/my-it-tools/venv"
+    python3 -m venv "$venv"
+    "$venv/bin/pip" install -q --upgrade pip platformio
+    echo "PlatformIO installed at $venv/bin/pio"
     "$venv/bin/pio" run -d "$PROJECT_DIR/esp32"
-  fi
-  if [[ "$FLASH_ESP32" -eq 1 ]]; then
-    local port
-    port="$(ls /dev/cu.usbmodem* /dev/cu.SLAB_USBtoUART* 2>/dev/null | head -n1 || true)"
-    [[ -n "$port" ]] || die "ESP32 USB port not found. Connect the controller or omit --esp32."
-    "$venv/bin/pio" run -d "$PROJECT_DIR/esp32" -t upload --upload-port "$port"
+    if [[ "$FLASH_ESP32" -eq 1 ]]; then
+      local port
+      port="$(ls /dev/cu.usbmodem* /dev/cu.SLAB_USBtoUART* 2>/dev/null | head -n1 || true)"
+      [[ -n "$port" ]] || die "ESP32 USB port not found. Connect the controller or answer No to flashing."
+      "$venv/bin/pio" run -d "$PROJECT_DIR/esp32" -t upload --upload-port "$port"
+    fi
   fi
 }
 
@@ -97,15 +126,17 @@ install_linux_tools() {
     sudo systemctl enable --now docker
   fi
   sudo usermod -aG docker "$USER" || true
-  if [[ "$GATEWAY_ONLY" -eq 0 && "$FLASH_ESP32" -eq 1 ]]; then
+  if [[ "$SETUP_ESP32" -eq 1 ]]; then
     local venv="$HOME/.local/share/my-it-tools/venv"
     python3 -m venv "$venv"
     "$venv/bin/pip" install -q --upgrade pip platformio
     "$venv/bin/pio" run -d "$PROJECT_DIR/esp32"
-    local port
-    port="$(ls /dev/ttyACM* /dev/ttyUSB* 2>/dev/null | head -n1 || true)"
-    [[ -n "$port" ]] || die "ESP32 USB port not found. Connect the controller or omit --esp32."
-    "$venv/bin/pio" run -d "$PROJECT_DIR/esp32" -t upload --upload-port "$port"
+    if [[ "$FLASH_ESP32" -eq 1 ]]; then
+      local port
+      port="$(ls /dev/ttyACM* /dev/ttyUSB* 2>/dev/null | head -n1 || true)"
+      [[ -n "$port" ]] || die "ESP32 USB port not found. Connect the controller or answer No to flashing."
+      "$venv/bin/pio" run -d "$PROJECT_DIR/esp32" -t upload --upload-port "$port"
+    fi
   fi
 }
 
