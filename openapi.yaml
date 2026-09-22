@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: ESP32 IT Tools API
-  version: 1.6.0
+  version: 1.8.0
   description: Local developer tools and device diagnostics served by ESP32-C3.
 servers:
   - url: http://192.168.4.1
@@ -62,6 +62,17 @@ paths:
         - {name: path, in: query, schema: {type: string, default: /}}
       responses:
         '200': {description: Gateway, DNS, TCP and HTTP checks}
+  /api/http:
+    get:
+      summary: HTTP request proxy for the local API console
+      parameters:
+        - {name: method, in: query, schema: {type: string, default: GET}}
+        - {name: host, in: query, required: true, schema: {type: string}}
+        - {name: port, in: query, schema: {type: integer, default: 80}}
+        - {name: path, in: query, schema: {type: string, default: /}}
+        - {name: body, in: query, schema: {type: string}}
+      responses:
+        '200': {description: HTTP response metadata and response body}
   /metrics:
     get:
       summary: Prometheus metrics

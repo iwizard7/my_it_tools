@@ -1,5 +1,12 @@
 # Changelog
 
+## 1.8.0 - 2026-09-22
+
+- Added a mini Postman-style HTTP API console through the ESP32 network.
+- Added browser-side log analyzer with error/warning counts and secret masking.
+- Added dedicated DevOps navigation for API, logs, incident probing and metrics.
+- Exposed Docker, Kubernetes, SSH and Linux helper generators through the DevOps Toolkit.
+
 ## 1.7.1 - 2026-09-22
 
 - Fixed a JavaScript syntax error in the curl command builder that prevented the UI from initializing.

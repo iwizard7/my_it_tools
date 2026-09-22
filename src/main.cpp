@@ -12,7 +12,7 @@ namespace {
 constexpr char kApName[] = "ESP32-Random-Tools";
 constexpr char kApPassword[] = "randomtools";
 constexpr char kHostname[] = "esp32-it-tools";
-constexpr char kVersion[] = "1.7.1";
+constexpr char kVersion[] = "1.8.0";
 constexpr size_t kMaxLength = 256;
 constexpr size_t kMaxResults = 20;
 
@@ -78,7 +78,7 @@ const char kPage[] PROGMEM = R"HTML(
       <div class="navgroup"><h3>Generate</h3><button class="active" data-tool="random">🎲 Random data</button><button data-tool="uuid">🆔 UUID generator</button><button data-tool="token">🔑 Token & password</button><button data-tool="qr">▦ QR generator</button></div>
       <div class="navgroup"><h3>Transform</h3><button data-tool="base64">🔤 Base64</button><button data-tool="url">🔗 URL encoder</button><button data-tool="json">{ } JSON tools</button><button data-tool="stats">📊 Text statistics</button><button data-tool="toolbox">🧰 DevOps Toolkit</button></div>
       <div class="navgroup"><h3>Network</h3><button data-tool="network">🌐 Network diagnostics</button></div>
-      <div class="navgroup"><h3>DevOps</h3><button data-tool="incident">🚨 Incident probe</button><button data-tool="system">📈 Metrics & device</button></div>
+      <div class="navgroup"><h3>DevOps</h3><button data-tool="api">🧪 API console</button><button data-tool="logs">📋 Log analyzer</button><button data-tool="incident">🚨 Incident probe</button><button data-tool="system">📈 Metrics & device</button></div>
     </nav>
     <section class="card">
       <div id="random" class="tool active">
@@ -96,11 +96,13 @@ const char kPage[] PROGMEM = R"HTML(
       <div id="toolbox" class="tool"><h2>DevOps Toolkit</h2><p class="hint">Local helpers for API, Linux, Git, Docker, Kubernetes, CI/CD, secrets and SRE work.</p><select id="toolSelect"><option value="sha256">SHA-256 hash</option><option value="hmac">HMAC note</option><option value="strength">Password strength</option><option value="jwtverify">JWT signature verification</option><option value="secretScan">Secret scanner</option><option value="curl">curl command builder</option><option value="headers">HTTP headers checker</option><option value="jsonvalidate">JSON validator</option><option value="sla">SLA / error budget</option><option value="semver">SemVer comparator</option><option value="commit">Conventional Commit validator</option><option value="changelog">Changelog entry</option><option value="branch">Git branch name</option><option value="docker">Docker image parser</option><option value="compose">Docker Compose service</option><option value="dockerport">Docker port mapping</option><option value="healthcheck">Docker healthcheck</option><option value="k8s">Kubernetes quantity converter</option><option value="k8sdeploy">Kubernetes Deployment</option><option value="k8sservice">Kubernetes Service</option><option value="probes">Kubernetes probes</option><option value="resources">Kubernetes resources</option><option value="kubectl">kubectl command builder</option><option value="cron">Cron template</option><option value="systemd">systemd unit</option><option value="chmod">chmod calculator</option><option value="env">.env validator</option><option value="shellquote">Shell quote</option><option value="sshconfig">SSH config</option><option value="promql">PromQL helper</option><option value="slo">SLO calculator</option><option value="apdex">Apdex calculator</option><option value="alert">Prometheus alert rule</option><option value="logjson">JSON log formatter</option><option value="mask">Log secret masking</option><option value="gha">GitHub Actions workflow</option><option value="artifact">Artifact manifest</option><option value="checklist">Deployment checklist</option><option value="postmortem">Incident postmortem</option><option value="html">HTML entities</option><option value="unicode">Text ↔ Unicode</option><option value="binary">Text ↔ binary</option><option value="hex">Text ↔ hexadecimal</option><option value="case">Case converter</option><option value="slug">Slugify string</option><option value="jwt">JWT decoder</option><option value="urlparse">URL parser</option><option value="jsoncsv">JSON array ↔ CSV</option><option value="ipv4">IPv4 subnet calculator</option><option value="mac">MAC address generator</option><option value="port">Random port generator</option><option value="ipv6">IPv6 ULA generator</option><option value="ulid">ULID generator</option><option value="nanoid">NanoID generator</option><option value="lorem">Lorem Ipsum</option><option value="fake">Fake test data</option><option value="svg">SVG placeholder</option><option value="diff">Simple text diff</option><option value="wifiscan">Wi‑Fi scanner</option><option value="net">Network diagnostic</option><option value="filehash">File SHA-256</option></select><br><br><textarea id="toolInput" placeholder="Input..."></textarea><br><input id="toolFile" type="file" style="margin-top:10px"><br><br><button id="toolRun">Run tool</button><button id="toolClear" class="secondary">Clear</button><div id="toolOutput" class="output"></div></div>
       <div id="qr" class="tool"><h2>QR code generator</h2><p class="hint">Generate a QR code on the ESP32. Maximum payload: 600 characters. Works offline.</p><textarea id="qrInput" placeholder="Text, URL or Wi‑Fi payload..."></textarea><br><br><button id="qrGenerate">Generate QR</button><button id="qrDownload" class="secondary">Download SVG</button><div id="qrStatus" class="status"></div><div id="qrOutput" style="background:white;border-radius:12px;padding:18px;margin-top:16px;text-align:center;min-height:120px"></div></div>
       <div id="network" class="tool"><h2>Network diagnostics</h2><p class="hint">DNS, IP, TCP, HTTP, DHCP, mDNS and Wi‑Fi checks from the ESP32 network.</p><div class="controls"><div><label for="networkAction">Diagnostic</label><select id="networkAction"><option value="dns">DNS lookup</option><option value="ping">Reachability / latency</option><option value="http">HTTP status</option><option value="tcp">TCP port check</option><option value="dhcp">DHCP information</option><option value="mdns">mDNS service browser</option><option value="wifiscan">Wi‑Fi scan</option><option value="ipv4">IPv4 subnet calculator</option></select></div><div><label for="networkHost">Hostname, IP or CIDR</label><input id="networkHost" value="example.com" placeholder="example.com or 192.168.1.10/24"></div><div><label for="networkPort">TCP port</label><input id="networkPort" type="number" min="1" max="65535" value="80"></div></div><br><button id="runNetwork">Run diagnostic</button><div id="networkStatus" class="status">Ready</div><pre id="networkOutput" class="output"></pre></div>
+      <div id="api" class="tool"><h2>Mini API console</h2><p class="hint">HTTP client through the ESP32 network. HTTPS certificate verification is intentionally not included.</p><div class="controls"><div><label for="apiMethod">Method</label><select id="apiMethod"><option>GET</option><option>POST</option><option>PUT</option><option>DELETE</option></select></div><div><label for="apiHost">Host</label><input id="apiHost" value="example.com"></div><div><label for="apiPort">Port</label><input id="apiPort" type="number" value="80"></div></div><br><label for="apiPath">Path</label><input id="apiPath" value="/"><br><br><label for="apiBody">Request body</label><textarea id="apiBody" placeholder='{"hello":"world"}'></textarea><br><br><button id="sendApi">Send request</button><div id="apiStatus" class="status"></div><pre id="apiOutput" class="output"></pre></div>
+      <div id="logs" class="tool"><h2>Log analyzer</h2><p class="hint">Paste plain text or JSON logs. Analysis stays in the browser.</p><textarea id="logInput" placeholder="2026-09-22T10:00:00Z ERROR api timeout\n2026-09-22T10:00:01Z INFO request ok"></textarea><br><br><button id="analyzeLogs">Analyze logs</button><button id="maskLogs" class="secondary">Mask secrets</button><pre id="logOutput" class="output"></pre></div>
       <div id="incident" class="tool"><h2>DevOps Incident & Network Probe</h2><p class="hint">Run a compact incident report against a service from the ESP32 network.</p><div class="controls"><div><label for="incidentHost">Target hostname or IP</label><input id="incidentHost" value="example.com" placeholder="api.example.com"></div><div><label for="incidentPort">TCP port</label><input id="incidentPort" type="number" min="1" max="65535" value="80"></div><div><label for="incidentPath">HTTP path</label><input id="incidentPath" value="/" placeholder="/health"></div></div><br><button id="runIncident">Run incident checks</button><button id="copyIncident" class="secondary">Copy JSON</button><button id="downloadIncident" class="secondary">Download report</button><div id="incidentStatus" class="status">Ready</div><pre id="incidentOutput" class="output"></pre></div>
       <div id="system" class="tool"><h2>Device & OTA</h2><p class="hint">Live ESP32 status, Wi‑Fi configuration, metrics and wireless firmware updates.</p><button id="refreshSystem">Refresh status</button><div id="systemOutput" class="output">Loading...</div><canvas id="metricsChart" width="700" height="220" style="width:100%;margin-top:16px;background:#111827;border-radius:10px"></canvas><hr><h3>Connect to home Wi‑Fi</h3><p class="hint">The ESP32 access point remains available while connecting.</p><input id="wifiSsid" placeholder="Wi‑Fi network name"><br><br><input id="wifiPassword" type="password" placeholder="Wi‑Fi password"><br><br><button id="saveWifi">Save and restart</button><hr><h3>OTA firmware update</h3><input id="firmware" type="file" accept=".bin"><br><br><button id="uploadFirmware">Upload firmware</button><div id="otaStatus" class="status"></div></div>
     </section>
   </div>
-  <footer>ESP32-C3 · local-only tools · Wi-Fi AP: ESP32-Random-Tools · v1.7.1</footer>
+  <footer>ESP32-C3 · local-only tools · Wi-Fi AP: ESP32-Random-Tools · v1.8.0</footer>
 </main>
 <script>
 const $ = id => document.getElementById(id);
@@ -206,6 +208,9 @@ $('qrGenerate').onclick=async()=>{const text=$('qrInput').value;if(!text){$('qrS
 $('qrDownload').onclick=()=>{if(!qrSvg){$('qrStatus').textContent='Generate a QR code first';return;}const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([qrSvg],{type:'image/svg+xml'}));a.download='esp32-qr.svg';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);};
 let incidentReport=null;
 $('runNetwork').onclick=async()=>{const op=$('networkAction').value,host=$('networkHost').value.trim(),port=$('networkPort').value;$('networkStatus').textContent='Running diagnostic...';try{let out;if(op==='ipv4'){out=ipv4Calc(host);}else{const url=op==='wifiscan'?'/api/wifi/scan':`/api/net?op=${encodeURIComponent(op)}&host=${encodeURIComponent(host)}&port=${port}`;const r=await fetch(url);out=JSON.stringify(await r.json(),null,2);} $('networkOutput').textContent=out;$('networkStatus').textContent='Completed';}catch(e){$('networkStatus').textContent='Diagnostic error';$('networkOutput').textContent=e.message;}};
+$('sendApi').onclick=async()=>{const q=new URLSearchParams({method:$('apiMethod').value,host:$('apiHost').value,port:$('apiPort').value,path:$('apiPath').value,body:$('apiBody').value});$('apiStatus').textContent='Sending...';try{const r=await fetch('/api/http?'+q);const x=await r.json();$('apiOutput').textContent=JSON.stringify(x,null,2);$('apiStatus').textContent=(x.ok?'HTTP '+x.status:'Request failed')+' · '+x.latencyMs+' ms';}catch(e){$('apiStatus').textContent='API error: '+e.message;}};
+$('analyzeLogs').onclick=()=>{const t=$('logInput').value,lines=t? t.split(/\r?\n/):[],errors=lines.filter(x=>/\b(error|fatal|critical|exception|fail(ed|ure)?)\b/i.test(x)),warn=lines.filter(x=>/\bwarn(ing)?\b/i.test(x)),info=lines.filter(x=>/\binfo\b/i.test(x));$('logOutput').textContent=`Lines: ${lines.length}\nErrors: ${errors.length}\nWarnings: ${warn.length}\nInfo: ${info.length}\n\nTop errors:\n${errors.slice(0,10).join('\n')}`;};
+$('maskLogs').onclick=()=>{$('logInput').value=$('logInput').value.replace(/(password|secret|token|api[_-]?key)\s*[:=]\s*[^\s,]+/gi,'$1=***REDACTED***').replace(/gh[pousr]_[A-Za-z0-9_]+/g,'***TOKEN***');};
 $('runIncident').onclick=async()=>{const host=$('incidentHost').value.trim(),port=$('incidentPort').value,path=$('incidentPath').value||'/';if(!host){$('incidentStatus').textContent='Enter a target host';return;}$('incidentStatus').textContent='Running DNS, gateway, TCP and HTTP checks...';try{const r=await fetch('/api/incident?host='+encodeURIComponent(host)+'&port='+port+'&path='+encodeURIComponent(path));incidentReport=await r.json();$('incidentOutput').textContent=JSON.stringify(incidentReport,null,2);$('incidentStatus').textContent=(incidentReport.ok?'PASS':'FAIL')+' · '+incidentReport.durationMs+' ms';}catch(e){$('incidentStatus').textContent='Probe error: '+e.message;}};
 $('copyIncident').onclick=()=>{if(incidentReport)navigator.clipboard.writeText(JSON.stringify(incidentReport,null,2));};
 $('downloadIncident').onclick=()=>{if(!incidentReport)return;const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(incidentReport,null,2)],{type:'application/json'}));a.download='incident-report.json';a.click();};
@@ -291,6 +296,53 @@ void handlePrometheus() {
                 "\n# HELP esp32_chip_temperature_celsius Chip temperature\n# TYPE esp32_chip_temperature_celsius gauge\nesp32_chip_temperature_celsius " + String(temperatureRead(), 1) +
                 "\n# HELP esp32_generation_rate_per_second Random generation rate\n# TYPE esp32_generation_rate_per_second gauge\nesp32_generation_rate_per_second " + String(generationRate, 2) + "\n";
   server.send(200, "text/plain; version=0.0.4", body);
+}
+
+String jsonEscape(const String &value) {
+  String result;
+  result.reserve(value.length() + 16);
+  for (size_t i = 0; i < value.length(); ++i) {
+    const char c = value[i];
+    if (c == '\\') result += "\\\\";
+    else if (c == '"') result += "\\\"";
+    else if (c == '\n') result += "\\n";
+    else if (c == '\r') result += "\\r";
+    else if (static_cast<uint8_t>(c) >= 32) result += c;
+  }
+  return result;
+}
+
+void handleHttp() {
+  const String method = server.arg("method").isEmpty() ? "GET" : server.arg("method");
+  const String host = server.arg("host");
+  const String path = server.arg("path").isEmpty() ? "/" : server.arg("path");
+  const String body = server.arg("body");
+  const uint16_t port = static_cast<uint16_t>(constrain(server.arg("port").toInt(), 1, 65535));
+  const unsigned long started = millis();
+  IPAddress ip;
+  WiFiClient client;
+  int status = 0;
+  String response;
+  bool ok = !host.isEmpty() && WiFi.hostByName(host.c_str(), ip) && client.connect(ip, port, 5000);
+  if (ok) {
+    client.printf("%s %s HTTP/1.0\r\nHost: %s\r\nAccept: application/json, text/plain, */*\r\nConnection: close\r\n", method.c_str(), path.c_str(), host.c_str());
+    if (method != "GET" && method != "DELETE") client.printf("Content-Type: application/json\r\nContent-Length: %u\r\n", body.length());
+    client.print("\r\n");
+    if (method != "GET" && method != "DELETE") client.print(body);
+    const String line = client.readStringUntil('\n');
+    const int firstSpace = line.indexOf(' ');
+    if (firstSpace >= 0) status = line.substring(firstSpace + 1).toInt();
+    const unsigned long deadline = millis() + 5000;
+    while (client.connected() && millis() < deadline && response.length() < 8192) {
+      if (client.available()) response += static_cast<char>(client.read());
+      else delay(1);
+    }
+  }
+  client.stop();
+  String json = "{\"ok\":" + String(ok ? "true" : "false") + ",\"status\":" + String(status) +
+                ",\"host\":\"" + jsonEscape(host) + "\",\"ip\":\"" + ip.toString() +
+                "\",\"latencyMs\":" + String(millis() - started) + ",\"response\":\"" + jsonEscape(response) + "\"}";
+  server.send(200, "application/json", json);
 }
 
 void handleIncident() {
@@ -528,6 +580,7 @@ void setup() {
   server.on("/api/system", HTTP_GET, handleSystem);
   server.on("/api/metrics", HTTP_GET, handleMetrics);
   server.on("/metrics", HTTP_GET, handlePrometheus);
+  server.on("/api/http", HTTP_GET, handleHttp);
   server.on("/api/incident", HTTP_GET, handleIncident);
   server.on("/api/net", HTTP_GET, handleNet);
   server.on("/api/hash", HTTP_POST, handleHash);

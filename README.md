@@ -33,6 +33,8 @@
 - deployment checklist;
 - Prometheus endpoint `/metrics`.
 
+DevOps-раздел также содержит **Mini API Console** и **Log Analyzer**. API Console выполняет HTTP-запрос через сеть ESP32 и показывает status, IP, latency и response. Log Analyzer считает ошибки/warnings/info и умеет маскировать секреты.
+
 Раздел **DevOps Toolkit** также содержит локальные helpers для:
 
 - curl/API и HTTP headers;
@@ -177,6 +179,7 @@ GET  /api/wifi/scan
 GET  /api/qr?text=...
 GET  /api/metrics
 GET  /api/incident?host=example.com&port=80&path=/health
+GET  /api/http?method=GET&host=example.com&port=80&path=/
 GET  /metrics
 GET  /api/net?op=dns&host=example.com
 GET  /api/net?op=ping&host=example.com
