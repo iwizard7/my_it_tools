@@ -6,12 +6,14 @@ set -euo pipefail
 #   ./install.sh                         # detect host and install matching parts
 #   ./install.sh --esp32                 # also build and flash ESP32 if a port is found
 #   ./install.sh --gateway-only          # only deploy Debian Gateway
+#   ./install.sh --docker                # use optional Docker deployment
 #   ./install.sh --project-dir /opt/my_it_tools
 
 REPO_URL="${REPO_URL:-https://github.com/iwizard7/my_it_tools.git}"
 PROJECT_DIR="${PROJECT_DIR:-$PWD/my_it_tools}"
 FLASH_ESP32=0
 GATEWAY_ONLY=0
+USE_DOCKER=0
 
 log() { printf '\n[%s] %s\n' "$(date '+%H:%M:%S')" "$*"; }
 die() { echo "ERROR: $*" >&2; exit 1; }
@@ -21,6 +23,7 @@ while [[ $# -gt 0 ]]; do
   case "$1" in
     --esp32) FLASH_ESP32=1; shift ;;
     --gateway-only) GATEWAY_ONLY=1; shift ;;
+    --docker) USE_DOCKER=1; shift ;;
     --project-dir) PROJECT_DIR="${2:?missing project directory}"; shift 2 ;;
     --repo) REPO_URL="${2:?missing repository URL}"; shift 2 ;;
     -h|--help)
@@ -82,15 +85,17 @@ install_macos_tools() {
 install_linux_tools() {
   sudo apt-get update
   sudo apt-get install -y git curl ca-certificates python3 python3-venv
-  if ! has docker; then
+  if [[ "$USE_DOCKER" -eq 1 ]] && ! has docker; then
     log "Installing Docker with the official Docker installer"
     curl -fsSL https://get.docker.com | sudo sh
   fi
-  if ! docker compose version >/dev/null 2>&1; then
+  if [[ "$USE_DOCKER" -eq 1 ]] && ! docker compose version >/dev/null 2>&1; then
     sudo apt-get install -y docker-compose-plugin || true
   fi
-  docker compose version >/dev/null 2>&1 || die "Docker Compose plugin is not available"
-  sudo systemctl enable --now docker
+  if [[ "$USE_DOCKER" -eq 1 ]]; then
+    docker compose version >/dev/null 2>&1 || die "Docker Compose plugin is not available"
+    sudo systemctl enable --now docker
+  fi
   sudo usermod -aG docker "$USER" || true
   if [[ "$GATEWAY_ONLY" -eq 0 && "$FLASH_ESP32" -eq 1 ]]; then
     local venv="$HOME/.local/share/my-it-tools/venv"
@@ -104,7 +109,30 @@ install_linux_tools() {
   fi
 }
 
+start_native_gateway() {
+  local venv="$PROJECT_DIR/.gateway-venv"
+  log "Installing Debian Gateway in a native Python virtualenv"
+  python3 -m venv "$venv"
+  "$venv/bin/pip" install -q --upgrade pip
+  "$venv/bin/pip" install -q -r "$PROJECT_DIR/debian-gateway/requirements.txt"
+  mkdir -p "$PROJECT_DIR/debian-gateway/data"
+  if [[ -f "$PROJECT_DIR/.gateway.pid" ]] && kill -0 "$(cat "$PROJECT_DIR/.gateway.pid")" 2>/dev/null; then
+    log "Gateway is already running"
+  else
+    nohup "$venv/bin/uvicorn" app.main:app --app-dir "$PROJECT_DIR/debian-gateway" --host 0.0.0.0 --port 8080 \
+      >"$PROJECT_DIR/debian-gateway/gateway.log" 2>&1 &
+    echo $! > "$PROJECT_DIR/.gateway.pid"
+  fi
+  sleep 3
+  curl --fail --silent "http://127.0.0.1:8080/healthz" || die "Native Gateway failed health check"
+  echo
+}
+
 start_gateway() {
+  if [[ "$USE_DOCKER" -eq 0 ]]; then
+    start_native_gateway
+    return
+  fi
   cd "$PROJECT_DIR/debian-gateway"
   mkdir -p data
   if [[ "$TARGET" == "raspberry-pi" ]]; then
@@ -126,9 +154,7 @@ case "$TARGET" in
   *) die "Unsupported host OS: $OS" ;;
 esac
 
-if [[ "$TARGET" != "macos" && "$GATEWAY_ONLY" -eq 0 ]]; then
-  start_gateway
-elif [[ "$GATEWAY_ONLY" -eq 1 ]]; then
+if [[ "$GATEWAY_ONLY" -eq 0 || "$GATEWAY_ONLY" -eq 1 ]]; then
   start_gateway
 fi
 

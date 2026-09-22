@@ -51,7 +51,13 @@ chmod +x install.sh
 curl -fsSL https://raw.githubusercontent.com/iwizard7/my_it_tools/main/install.sh | bash
 ```
 
-Он определяет macOS, Debian/Ubuntu или Raspberry Pi, устанавливает нужные зависимости и запускает подходящий Gateway deployment. Для прошивки подключённого ESP32 используйте `--esp32` после клонирования проекта.
+Он определяет macOS, Debian/Ubuntu или Raspberry Pi, устанавливает нужные зависимости и запускает Gateway в обычном Python virtualenv — Docker не обязателен. Для прошивки подключённого ESP32 используйте `--esp32`.
+
+Если нужен Docker-вариант:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/iwizard7/my_it_tools/main/install.sh | bash -s -- --docker
+```
 
 See [`deploy/raspberry-pi/README.md`](deploy/raspberry-pi/README.md) for manual installation, service management and ESP32 Gateway URL configuration.
 

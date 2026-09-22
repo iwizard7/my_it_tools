@@ -3,7 +3,8 @@
 ## 1.9.2 - 2026-09-23
 
 - Added one-command cross-platform installer for macOS, Debian/Ubuntu and Raspberry Pi.
-- Linux hosts use the official Docker installer and verify the Docker Compose plugin.
+- Native Python Gateway is now the default; Docker is optional with `--docker`.
+- Docker installations use the official Docker installer and verify the Docker Compose plugin.
 - Added optional ESP32 build/flash mode with `--esp32`.
 
 ## 1.9.1 - 2026-09-23
