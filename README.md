@@ -33,6 +33,8 @@
 - deployment checklist;
 - Prometheus endpoint `/metrics`.
 
+Сетевые инструменты вынесены в отдельный раздел **Network diagnostics**: DNS lookup, reachability/latency, HTTP status, TCP port check, DHCP information, mDNS service browser, Wi‑Fi scan и IPv4 subnet calculator.
+
 ### Кодирование и текст
 
 - Base64 encoder/decoder;

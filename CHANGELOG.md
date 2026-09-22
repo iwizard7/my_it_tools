@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.6.1 - 2026-09-22
+
+- Moved DNS, IP, TCP, HTTP, DHCP, mDNS and Wi‑Fi tools into a dedicated Network Diagnostics menu.
+- Added quick network operation selection and a focused diagnostic output panel.
+
 ## 1.6.0 - 2026-09-22
 
 - Reorganized the UI into Generate, Transform, Security and DevOps workflows.
