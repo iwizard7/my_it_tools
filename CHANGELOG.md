@@ -1,5 +1,9 @@
 # Changelog
 
+## 1.7.1 - 2026-09-22
+
+- Fixed a JavaScript syntax error in the curl command builder that prevented the UI from initializing.
+
 ## 1.7.0 - 2026-09-22
 
 - Added the DevOps Toolkit menu with local browser-side tools for API, Linux, Git, Docker, Kubernetes, CI/CD, secrets, observability and incident response.

@@ -12,7 +12,7 @@ namespace {
 constexpr char kApName[] = "ESP32-Random-Tools";
 constexpr char kApPassword[] = "randomtools";
 constexpr char kHostname[] = "esp32-it-tools";
-constexpr char kVersion[] = "1.7.0";
+constexpr char kVersion[] = "1.7.1";
 constexpr size_t kMaxLength = 256;
 constexpr size_t kMaxResults = 20;
 
@@ -100,7 +100,7 @@ const char kPage[] PROGMEM = R"HTML(
       <div id="system" class="tool"><h2>Device & OTA</h2><p class="hint">Live ESP32 status, Wi‑Fi configuration, metrics and wireless firmware updates.</p><button id="refreshSystem">Refresh status</button><div id="systemOutput" class="output">Loading...</div><canvas id="metricsChart" width="700" height="220" style="width:100%;margin-top:16px;background:#111827;border-radius:10px"></canvas><hr><h3>Connect to home Wi‑Fi</h3><p class="hint">The ESP32 access point remains available while connecting.</p><input id="wifiSsid" placeholder="Wi‑Fi network name"><br><br><input id="wifiPassword" type="password" placeholder="Wi‑Fi password"><br><br><button id="saveWifi">Save and restart</button><hr><h3>OTA firmware update</h3><input id="firmware" type="file" accept=".bin"><br><br><button id="uploadFirmware">Upload firmware</button><div id="otaStatus" class="status"></div></div>
     </section>
   </div>
-  <footer>ESP32-C3 · local-only tools · Wi-Fi AP: ESP32-Random-Tools · v1.7.0</footer>
+  <footer>ESP32-C3 · local-only tools · Wi-Fi AP: ESP32-Random-Tools · v1.7.1</footer>
 </main>
 <script>
 const $ = id => document.getElementById(id);
@@ -149,7 +149,7 @@ else if(op==='commit'){out=/^(feat|fix|docs|refactor|test|chore|ci|perf|build|re
 else if(op==='docker'){const x=t.trim().replace(/^docker:\/\//,'').split('@');const tag=x[0].lastIndexOf(':')>x[0].lastIndexOf('/')?x[0].slice(x[0].lastIndexOf(':')+1):'latest';out=JSON.stringify({reference:x[0],tag,digest:x[1]||null,registry:x[0].includes('/')?x[0].split('/')[0]:'docker.io'},null,2);}
 else if(op==='k8s'){const m=t.trim().match(/^([\d.]+)(Ki|Mi|Gi|Ti|m)?$/);if(!m)throw Error('Use values like 500m, 256Mi or 2Gi');const mult={m:.001,Ki:1024,Mi:1048576,Gi:1073741824,Ti:1099511627776};out=`Value: ${t}\nBytes: ${+(m[1])*(mult[m[2]]||1)}`;}
 else if(op==='checklist'){out='[ ] Change approved\n[ ] Artifact checksum verified\n[ ] Backup confirmed\n[ ] Rollback plan ready\n[ ] Health endpoint checked\n[ ] Monitoring active\n[ ] Post-deploy smoke test\n[ ] Stakeholders notified';}
-else if(op==='curl'){const p=t.trim().split(/\s+/),method=p.shift()||'GET',url=p.shift()||'https://example.com';out=`curl -i -X ${method} '${url}' -H 'Accept: application/json'`+(method==='GET'?'':" -H 'Content-Type: application/json' -d '{}'`);}
+else if(op==='curl'){const p=t.trim().split(/\s+/),method=p.shift()||'GET',url=p.shift()||'https://example.com';out=`curl -i -X ${method} '${url}' -H 'Accept: application/json'`+(method==='GET'?'':" -H 'Content-Type: application/json' -d '{}'");}
 else if(op==='headers'){const h=t.split(/\r?\n/).map(x=>x.split(':')[0].toLowerCase()),needed=['content-type','cache-control','x-content-type-options','x-frame-options'];out=needed.map(x=>`${h.includes(x)?'PASS':'WARN'} ${x}`).join('\n');}
 else if(op==='jsonvalidate'){try{JSON.parse(t);out='Valid JSON';}catch(e){out='Invalid JSON: '+e.message;}}
 else if(op==='changelog'){out=`## ${t||'1.0.0'} - ${new Date().toISOString().slice(0,10)}\n\n- Added change description.`;}
