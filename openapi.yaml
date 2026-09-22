@@ -78,3 +78,34 @@ paths:
       summary: Prometheus metrics
       responses:
         '200': {description: Prometheus text exposition format}
+  /api/dns/lookup:
+    get:
+      summary: Resolve a DNS record through Debian Gateway
+      parameters:
+        - {name: name, in: query, required: true, schema: {type: string}}
+        - {name: record_type, in: query, schema: {type: string, default: A}}
+        - {name: resolver, in: query, schema: {type: string}}
+      responses:
+        '200': {description: DNS answers and TTL}
+  /api/dns/reverse:
+    get:
+      summary: Reverse DNS lookup
+      parameters:
+        - {name: name, in: query, required: true, schema: {type: string}}
+      responses:
+        '200': {description: PTR answers}
+  /api/dns/compare:
+    get:
+      summary: Compare public resolvers
+      parameters:
+        - {name: name, in: query, required: true, schema: {type: string}}
+        - {name: record_type, in: query, schema: {type: string, default: A}}
+      responses:
+        '200': {description: Answers from Cloudflare, Google and Quad9}
+  /api/dns/health:
+    get:
+      summary: Check common DNS health records
+      parameters:
+        - {name: name, in: query, required: true, schema: {type: string}}
+      responses:
+        '200': {description: A, AAAA, MX, NS, SPF, DMARC and CAA checks}

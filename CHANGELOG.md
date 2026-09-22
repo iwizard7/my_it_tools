@@ -5,6 +5,8 @@
 - Added extended route, DNS details and batch port diagnostics to Network Diagnostics.
 - Added bounded Debian Gateway traceroute endpoint for real hop-by-hop tracing.
 - Kept raw traceroute out of ESP32 firmware because it requires host-level ICMP/raw socket capabilities.
+- Added contextual interactive help for every ESP32 UI section.
+- Added DNS Inspector for record lookup, reverse DNS, resolver comparison and DNS health checks.
 
 ## 1.8.1 - 2026-09-23
 

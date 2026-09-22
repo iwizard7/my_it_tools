@@ -33,6 +33,8 @@ The ESP32 **Log Analyzer** can load local `.log`, `.txt`, `.json`, `.ndjson` and
 
 Network Diagnostics now includes route/DHCP details, DNS details and batch TCP port checks. Real hop-by-hop traceroute is exposed by Debian Gateway at `/api/traceroute`, because raw ICMP tracing belongs on the Debian host rather than inside the ESP32 firmware.
 
+The separate **DNS Inspector** uses Debian Gateway for advanced DNS operations: record lookup, reverse DNS, resolver comparison and DNS health checks. Configure the gateway URL in the DNS Inspector panel.
+
 ## Development checks
 
 ```bash

@@ -41,3 +41,14 @@ sudo apt-get install traceroute
 ```
 
 Коллекции сохраняются в volume в `data/collections.json`.
+
+## DNS Inspector API
+
+```bash
+curl 'http://127.0.0.1:8080/api/dns/lookup?name=example.com&record_type=A'
+curl 'http://127.0.0.1:8080/api/dns/reverse?name=8.8.8.8'
+curl 'http://127.0.0.1:8080/api/dns/compare?name=example.com&record_type=A'
+curl 'http://127.0.0.1:8080/api/dns/health?name=example.com'
+```
+
+Supported record types include A, AAAA, CNAME, MX, NS, TXT, SOA, SRV, CAA, PTR and NAPTR.

@@ -10,6 +10,8 @@ from pathlib import Path
 from typing import Any
 
 import httpx
+import dns.reversename
+import dns.resolver
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field, HttpUrl
@@ -80,6 +82,54 @@ async def traceroute(host: str, max_hops: int = 16) -> dict[str, Any]:
     except (asyncio.TimeoutError, OSError) as exc:
         raise HTTPException(status_code=504, detail=str(exc)) from exc
     return {"host": host, "exitCode": process.returncode, "output": stdout.decode(errors="replace")}
+
+
+def dns_resolver(nameserver: str | None = None) -> dns.resolver.Resolver:
+    resolver = dns.resolver.Resolver()
+    if nameserver:
+        resolver.nameservers = [nameserver]
+    resolver.lifetime = 4
+    return resolver
+
+
+@app.get("/api/dns/lookup")
+async def dns_lookup(name: str, record_type: str = "A", resolver: str | None = None) -> dict[str, Any]:
+    record_type = record_type.upper()
+    if record_type not in {"A", "AAAA", "CNAME", "MX", "NS", "TXT", "SOA", "SRV", "CAA", "PTR", "NAPTR"}:
+        raise HTTPException(status_code=400, detail="unsupported record type")
+    try:
+        answer = dns_resolver(resolver).resolve(name, record_type)
+        return {"name": name, "type": record_type, "resolver": resolver or "system", "ttl": answer.rrset.ttl, "answers": [item.to_text() for item in answer]}
+    except Exception as exc:
+        return {"name": name, "type": record_type, "resolver": resolver or "system", "answers": [], "error": str(exc)}
+
+
+@app.get("/api/dns/reverse")
+async def dns_reverse(name: str) -> dict[str, Any]:
+    try:
+        reverse = dns.reversename.from_address(name)
+        answer = dns_resolver().resolve(reverse, "PTR")
+        return {"ip": name, "ptr": [item.to_text() for item in answer]}
+    except Exception as exc:
+        return {"ip": name, "ptr": [], "error": str(exc)}
+
+
+@app.get("/api/dns/compare")
+async def dns_compare(name: str, record_type: str = "A") -> dict[str, Any]:
+    results = {}
+    for resolver in ("1.1.1.1", "8.8.8.8", "9.9.9.9"):
+        result = await dns_lookup(name, record_type, resolver)
+        results[resolver] = result
+    return {"name": name, "type": record_type.upper(), "resolvers": results}
+
+
+@app.get("/api/dns/health")
+async def dns_health(name: str) -> dict[str, Any]:
+    checks = {}
+    for label, record_type, query in (("A", "A", name), ("AAAA", "AAAA", name), ("MX", "MX", name), ("NS", "NS", name), ("SPF", "TXT", name), ("DMARC", "TXT", f"_dmarc.{name}"), ("CAA", "CAA", name)):
+        result = await dns_lookup(query, record_type)
+        checks[label] = {"ok": bool(result.get("answers")), "answers": result.get("answers", []), "error": result.get("error")}
+    return {"domain": name, "checks": checks, "ok": checks["A"]["ok"] and checks["NS"]["ok"] and checks["MX"]["ok"]}
 
 
 @app.post("/api/request")
