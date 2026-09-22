@@ -35,6 +35,18 @@ Network Diagnostics now includes route/DHCP details, DNS details and batch TCP p
 
 The separate **DNS Inspector** uses Debian Gateway for advanced DNS operations: record lookup, reverse DNS, resolver comparison and DNS health checks. Configure the gateway URL in the DNS Inspector panel.
 
+## Raspberry Pi 3B deployment
+
+The Debian Gateway can run on Raspberry Pi 3B with Raspberry Pi OS/Debian:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/iwizard7/my_it_tools/main/deploy/raspberry-pi/install.sh -o install.sh
+chmod +x install.sh
+./install.sh
+```
+
+See [`deploy/raspberry-pi/README.md`](deploy/raspberry-pi/README.md) for manual installation, service management and ESP32 Gateway URL configuration.
+
 The Transform menu includes **Cyrillic & Latin analyzer**. It highlights Cyrillic characters in red and Latin characters in blue, supports texts up to 1 MB and processes everything locally in the browser.
 
 ## Development checks
