@@ -45,6 +45,14 @@ chmod +x install.sh
 ./install.sh
 ```
 
+Для всех поддерживаемых host-платформ также доступен единый установщик из корня репозитория:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/iwizard7/my_it_tools/main/install.sh | bash
+```
+
+Он определяет macOS, Debian/Ubuntu или Raspberry Pi, устанавливает нужные зависимости и запускает подходящий Gateway deployment. Для прошивки подключённого ESP32 используйте `--esp32` после клонирования проекта.
+
 See [`deploy/raspberry-pi/README.md`](deploy/raspberry-pi/README.md) for manual installation, service management and ESP32 Gateway URL configuration.
 
 The Transform menu includes **Cyrillic & Latin analyzer**. It highlights Cyrillic characters in red and Latin characters in blue, supports texts up to 1 MB and processes everything locally in the browser.

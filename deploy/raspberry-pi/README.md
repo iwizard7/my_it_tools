@@ -1,6 +1,6 @@
 # Raspberry Pi 3B deployment
 
-This deployment runs the Debian Gateway on Raspberry Pi 3B with Raspberry Pi OS/Debian. The Pi becomes the execution backend for the ESP32 UI: HTTP/HTTPS requests, DNS Inspector, traceroute and persistent collections run on the Pi.
+This deployment runs the Debian Gateway on Raspberry Pi 3B with Raspberry Pi OS/Debian. The Pi becomes the execution backend for the ESP32 UI: HTTP/HTTPS requests, DNS Inspector, traceroute and persistent collections run on the Pi. The installer uses Docker's official installation script and then verifies Docker Compose.
 
 ## Requirements
 
