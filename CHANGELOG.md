@@ -1,5 +1,11 @@
 # Changelog
 
+## 1.7.0 - 2026-09-22
+
+- Added the DevOps Toolkit menu with local browser-side tools for API, Linux, Git, Docker, Kubernetes, CI/CD, secrets, observability and incident response.
+- Added curl/API, HTTP headers, JSON validation, changelog, branch, Compose, Docker healthcheck, Kubernetes manifest, systemd, chmod, `.env`, shell quoting and SSH config helpers.
+- Added PromQL, SLO, Apdex, Prometheus alert, log formatting/masking, GitHub Actions, artifact manifest and postmortem generators.
+
 ## 1.6.1 - 2026-09-22
 
 - Moved DNS, IP, TCP, HTTP, DHCP, mDNS and Wi‑Fi tools into a dedicated Network Diagnostics menu.

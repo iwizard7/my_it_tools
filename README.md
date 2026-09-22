@@ -33,6 +33,17 @@
 - deployment checklist;
 - Prometheus endpoint `/metrics`.
 
+Раздел **DevOps Toolkit** также содержит локальные helpers для:
+
+- curl/API и HTTP headers;
+- JSON validation;
+- changelog, branch и Conventional Commit;
+- Docker image, Compose, ports и healthcheck;
+- Kubernetes Deployment, Service, probes, resources и kubectl;
+- cron, systemd, chmod, `.env`, shell quoting и SSH config;
+- PromQL, SLO, Apdex и Prometheus alerts;
+- JSON logs, secret masking, GitHub Actions, artifact manifest и postmortem.
+
 Сетевые инструменты вынесены в отдельный раздел **Network diagnostics**: DNS lookup, reachability/latency, HTTP status, TCP port check, DHCP information, mDNS service browser, Wi‑Fi scan и IPv4 subnet calculator.
 
 ### Кодирование и текст
