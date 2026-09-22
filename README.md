@@ -20,6 +20,7 @@
 - fake test data;
 - SVG placeholder;
 - cron templates.
+- QR code generator (SVG, до 2000 символов).
 
 ### Кодирование и текст
 
@@ -140,6 +141,7 @@ pio run
 GET  /api/generate?length=32&count=5&upper=true&lower=true&digits=true&symbols=true
 GET  /api/system
 GET  /api/wifi/scan
+GET  /api/qr?text=...
 POST /api/hash              # raw text body, SHA-256 response
 POST /api/wifi              # ssid и password в form-urlencoded
 POST /api/update             # firmware.bin

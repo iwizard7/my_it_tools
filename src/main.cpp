@@ -5,6 +5,7 @@
 #include <WebServer.h>
 #include <WiFi.h>
 #include <mbedtls/sha256.h>
+#include <qrcode.h>
 
 namespace {
 constexpr char kApName[] = "ESP32-Random-Tools";
@@ -19,6 +20,7 @@ String configuredSsid;
 String configuredPassword;
 bool updateInProgress = false;
 size_t updateSize = 0;
+esp_qrcode_handle_t generatedQr = nullptr;
 
 const char kPage[] PROGMEM = R"HTML(
 <!doctype html>
@@ -72,6 +74,7 @@ const char kPage[] PROGMEM = R"HTML(
       <button data-tool="json">{ } JSON tools</button>
       <button data-tool="stats">📊 Text statistics</button>
       <button data-tool="toolbox">🧰 More IT tools</button>
+      <button data-tool="qr">▦ QR generator</button>
       <button data-tool="system">⚙️ Device & OTA</button>
     </nav>
     <section class="card">
@@ -88,6 +91,7 @@ const char kPage[] PROGMEM = R"HTML(
       <div id="json" class="tool"><h2>JSON formatter</h2><p class="hint">Format or minify JSON without sending data anywhere.</p><textarea id="jsonInput" placeholder='{"name":"ESP32","online":true}'></textarea><br><br><button id="jsonFormat">Format</button><button id="jsonMinify" class="secondary">Minify</button><textarea id="jsonOutput" placeholder="Result..."></textarea></div>
       <div id="stats" class="tool"><h2>Text statistics</h2><p class="hint">Count characters, words, lines and bytes.</p><textarea id="statsInput" placeholder="Paste text here..."></textarea><br><br><button id="statsRun">Analyze</button><div id="statsOutput" class="output"></div></div>
       <div id="toolbox" class="tool"><h2>More IT tools</h2><p class="hint">Offline converters, generators, network helpers and security utilities.</p><select id="toolSelect"><option value="sha256">SHA-256 hash</option><option value="hmac">HMAC note</option><option value="html">HTML entities</option><option value="unicode">Text ↔ Unicode</option><option value="binary">Text ↔ binary</option><option value="hex">Text ↔ hexadecimal</option><option value="case">Case converter</option><option value="slug">Slugify string</option><option value="jwt">JWT decoder</option><option value="urlparse">URL parser</option><option value="jsoncsv">JSON array ↔ CSV</option><option value="ipv4">IPv4 subnet calculator</option><option value="mac">MAC address generator</option><option value="port">Random port generator</option><option value="ipv6">IPv6 ULA generator</option><option value="ulid">ULID generator</option><option value="nanoid">NanoID generator</option><option value="lorem">Lorem Ipsum</option><option value="fake">Fake test data</option><option value="svg">SVG placeholder</option><option value="cron">Cron template</option><option value="diff">Simple text diff</option><option value="wifiscan">Wi‑Fi scanner</option></select><br><br><textarea id="toolInput" placeholder="Input..."></textarea><br><br><button id="toolRun">Run tool</button><button id="toolClear" class="secondary">Clear</button><div id="toolOutput" class="output"></div></div>
+      <div id="qr" class="tool"><h2>QR code generator</h2><p class="hint">Generate a QR code on the ESP32. Maximum payload: 600 characters. Works offline.</p><textarea id="qrInput" placeholder="Text, URL or Wi‑Fi payload..."></textarea><br><br><button id="qrGenerate">Generate QR</button><button id="qrDownload" class="secondary">Download SVG</button><div id="qrStatus" class="status"></div><div id="qrOutput" style="background:white;border-radius:12px;padding:18px;margin-top:16px;text-align:center;min-height:120px"></div></div>
       <div id="system" class="tool"><h2>Device & OTA</h2><p class="hint">Live ESP32 status, Wi‑Fi configuration and wireless firmware updates.</p><button id="refreshSystem">Refresh status</button><div id="systemOutput" class="output">Loading...</div><hr><h3>Connect to home Wi‑Fi</h3><p class="hint">The ESP32 access point remains available while connecting.</p><input id="wifiSsid" placeholder="Wi‑Fi network name"><br><br><input id="wifiPassword" type="password" placeholder="Wi‑Fi password"><br><br><button id="saveWifi">Save and restart</button><hr><h3>OTA firmware update</h3><input id="firmware" type="file" accept=".bin"><br><br><button id="uploadFirmware">Upload firmware</button><div id="otaStatus" class="status"></div></div>
     </section>
   </div>
@@ -148,6 +152,9 @@ else if(op==='diff'){const parts=t.split(/\r?\n---\r?\n/);if(parts.length!==2)th
 else if(op==='wifiscan'){const r=await fetch('/api/wifi/scan');out=JSON.stringify(await r.json(),null,2);}
 $('toolOutput').textContent=out;}catch(e){$('toolOutput').textContent='Error: '+e.message;}}
 $('toolRun').onclick=toolboxRun; $('toolClear').onclick=()=>{$('toolInput').value='';$('toolOutput').textContent='';};
+let qrSvg='';
+$('qrGenerate').onclick=async()=>{const text=$('qrInput').value;if(!text){$('qrStatus').textContent='Enter text first';return;}if(text.length>600){$('qrStatus').textContent='Payload is too long (maximum 600 characters)';return;}$('qrStatus').textContent='Generating on ESP32...';try{const r=await fetch('/api/qr?text='+encodeURIComponent(text));if(!r.ok)throw Error(await r.text());qrSvg=await r.text();$('qrOutput').innerHTML=qrSvg;$('qrStatus').textContent='QR generated on the ESP32';}catch(e){$('qrStatus').textContent='QR error: '+e.message;}};
+$('qrDownload').onclick=()=>{if(!qrSvg){$('qrStatus').textContent='Generate a QR code first';return;}const a=document.createElement('a');a.href=URL.createObjectURL(new Blob([qrSvg],{type:'image/svg+xml'}));a.download='esp32-qr.svg';a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);};
 async function refreshSystem() { try { const x=await (await fetch('/api/system')).json(); $('systemOutput').textContent=`Chip: ${x.chip}\nSDK: ${x.sdk}\nCPU: ${x.cpu} MHz\nFree heap: ${x.heap} bytes\nFlash: ${x.flash} bytes\nUptime: ${x.uptime}s\nAP IP: ${x.apIp}\nStation: ${x.staIp||'not connected'}\nHostname: ${x.hostname}`; } catch(e) { $('systemOutput').textContent='Unable to read device status'; } }
 $('refreshSystem').onclick=refreshSystem;
 $('saveWifi').onclick=async()=>{const body=new URLSearchParams({ssid:$('wifiSsid').value,password:$('wifiPassword').value});const r=await fetch('/api/wifi',{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body});$('systemOutput').textContent=await r.text()+'\nThe device is restarting...';};
@@ -223,6 +230,40 @@ void handleWifiScan() {
   json += "]";
   WiFi.scanDelete();
   server.send(200, "application/json", json);
+}
+
+void captureQr(esp_qrcode_handle_t qr) {
+  generatedQr = qr;
+}
+
+void handleQr() {
+  const String text = server.arg("text");
+  if (text.isEmpty() || text.length() > 2000) {
+    server.send(400, "text/plain", "QR payload must contain 1-2000 characters");
+    return;
+  }
+  generatedQr = nullptr;
+  esp_qrcode_config_t config = ESP_QRCODE_CONFIG_DEFAULT();
+  config.display_func = captureQr;
+  config.max_qrcode_version = 20;
+  if (esp_qrcode_generate(&config, text.c_str()) != ESP_OK || generatedQr == nullptr) {
+    server.send(400, "text/plain", "Payload is too large for QR generation");
+    return;
+  }
+  const int size = esp_qrcode_get_size(generatedQr);
+  String svg;
+  svg.reserve(static_cast<size_t>(size * size * 12));
+  svg = "<svg xmlns=\"http://www.w3.org/2000/svg\" viewBox=\"0 0 ";
+  svg += String(size + 8) + " " + String(size + 8) + "\" shape-rendering=\"crispEdges\"><rect width=\"100%\" height=\"100%\" fill=\"white\"/><path fill=\"black\" d=\"";
+  for (int y = 0; y < size; ++y) {
+    for (int x = 0; x < size; ++x) {
+      if (esp_qrcode_get_module(generatedQr, x, y)) {
+        svg += "M" + String(x + 4) + "," + String(y + 4) + "h1v1h-1z";
+      }
+    }
+  }
+  svg += "\"/></svg>";
+  server.send(200, "image/svg+xml", svg);
 }
 
 void handleWifi() {
@@ -318,6 +359,7 @@ void setup() {
   server.on("/api/system", HTTP_GET, handleSystem);
   server.on("/api/hash", HTTP_POST, handleHash);
   server.on("/api/wifi/scan", HTTP_GET, handleWifiScan);
+  server.on("/api/qr", HTTP_GET, handleQr);
   server.on("/api/wifi", HTTP_POST, handleWifi);
   server.on("/api/update", HTTP_POST, handleUpdateDone, handleUpdateUpload);
   server.onNotFound([]() { server.send(404, "text/plain", "Not found"); });
